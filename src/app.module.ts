@@ -3,20 +3,19 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ApiModule } from './api/api.module';
+import { SharedModule } from './shared/shared.module';
+import { ConfigModule } from '@nestjs/config';
+import { getEnvPath } from './common/helper/env.helper';
+import { TypeOrmConfigService } from './shared/services/typeorm/typeorm.service';
+
+const envFilePath: string = getEnvPath(`${__dirname}/common/envs`);
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: '12345678',
-      database: 'nest-file-explorer',
-      entities: ['dist/**/*.entity.{ts,js}'],
-      synchronize: true,
-    }),
+    ConfigModule.forRoot({ envFilePath, isGlobal: true }),
+    TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
     ApiModule,
+    SharedModule,
   ],
   controllers: [AppController],
   providers: [AppService],
