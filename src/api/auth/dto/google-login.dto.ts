@@ -1,4 +1,4 @@
-export class CreateAuthDto {
+export class GoogleLoginDto {
   provider: string;
   id: string;
   email: string;

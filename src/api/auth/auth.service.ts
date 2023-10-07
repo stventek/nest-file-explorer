@@ -1,52 +1,30 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { User } from '../user/entities/user.entity';
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FederatedCredentials } from './entities/federated-credentials.entity';
+import { RegisterDto } from './dto/register.dto';
+import { hash } from 'bcrypt';
 
-/*TODO: add restrictions for email duplication and account liking */
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-    @InjectRepository(FederatedCredentials)
-    private readonly federatedCredentailsRepository: Repository<FederatedCredentials>,
-    private dataSource: DataSource,
   ) {}
 
-  async signIn(user: CreateAuthDto) {
-    const userExists = await this.federatedCredentailsRepository.findOne({
-      where: { subject: user.id },
-      relations: ['user'],
-    });
+  public async register(body: RegisterDto): Promise<User | never> {
+    const { name, email, password, username }: RegisterDto = body;
+    let user: User = await this.userRepository.findOneBy({ email });
 
-    if (userExists) {
-      const updateUser = userExists.user;
-      updateUser.lastLoginAt = new Date();
-      this.userRepository.save(updateUser);
-      return userExists;
+    if (user) {
+      throw new HttpException('Conflict', HttpStatus.CONFLICT);
     }
-    return this.registerUser(user);
-  }
 
-  async registerUser(user: CreateAuthDto) {
-    const newUser = this.userRepository.create({
-      username: user.name,
-      email: user.email,
-      name: user.name,
-      lastLoginAt: new Date(),
-    });
-    await this.dataSource.transaction(async (manager) => {
-      await manager.save(newUser);
-      const newFederatedCredentials =
-        this.federatedCredentailsRepository.create({
-          provider: user.provider,
-          subject: user.id,
-          user: newUser,
-        });
-      await manager.save(newFederatedCredentials);
-    });
-    return newUser;
+    user = new User();
+
+    user.name = name;
+    user.email = email;
+    user.password = await hash(password, 10);
+    user.username = username;
+    return this.userRepository.save(user);
   }
 }
