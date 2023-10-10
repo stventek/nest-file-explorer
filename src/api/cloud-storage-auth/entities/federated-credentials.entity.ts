@@ -14,6 +14,9 @@ export class FederatedKeys extends Base {
   @Column()
   refreshToken: string;
 
+  @Column({ type: 'bigint' })
+  expiry_date: string;
+
   @ManyToOne(() => User)
   user: User;
 }

@@ -37,6 +37,7 @@ export class GoogleDriveService {
     const { tokens } = await this.oauth2Client.getToken(code);
     // added updatedAt since a typeorm bug doesn't update it automatically, issue #9015
     const federatedKeys = {
+      expiry_date: tokens.expiry_date.toString(),
       user: { id: user.id },
       provider: 'drive',
       accessToken: tokens.access_token,
