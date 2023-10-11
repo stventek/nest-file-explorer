@@ -9,11 +9,23 @@ export class DriveController {
   constructor(private readonly driveService: DriveService) {}
 
   @UseGuards(RefreshAccessTokenGuard)
-  @Get('list')
-  list(@AccessToken() accessToken: string, @Query() folderIdDto: FolderIdDto) {
+  @Get('hierarchy')
+  hierarchy(
+    @AccessToken() accessToken: string,
+    @Query() folderIdDto: FolderIdDto,
+  ) {
     return this.driveService.getFolderHierarchy(
       folderIdDto.folderId,
       accessToken,
     );
+  }
+
+  @UseGuards(RefreshAccessTokenGuard)
+  @Get('list_children')
+  listChildren(
+    @AccessToken() accessToken: string,
+    @Query() folderIdDto: FolderIdDto,
+  ) {
+    return this.driveService.getChildren(folderIdDto.folderId, accessToken);
   }
 }
