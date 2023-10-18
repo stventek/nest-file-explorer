@@ -49,13 +49,7 @@ export class RefreshAccessTokenGuard implements CanActivate {
           credentials.credentials.expiry_date.toString();
         await this.federatedKeysRepository.save(federatedKeysRecord);
       } catch (error) {
-        if (error.message === 'Invalid Credentials') {
-          throw new UnauthorizedException(
-            'Google drive requires authorization',
-          );
-        } else {
-          throw new Error('Failed to refresh access token: ' + error.message);
-        }
+        throw new UnauthorizedException('Google drive requires authorization');
       }
     }
     request.accessToken = federatedKeysRecord.accessToken;
