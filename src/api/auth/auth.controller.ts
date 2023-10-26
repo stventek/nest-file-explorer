@@ -40,10 +40,10 @@ export class AuthController {
     return res.json(req.user);
   }
 
-  @Get('api/auth/google')
+  @Post('api/auth/google')
   async loginv2(@Req() req: Request, @Body() idTokenDto: IdTokenDto) {
     const user = await this.googleAuthService.signIn(idTokenDto.token);
-    req.session.passport.user.id = user;
+    req.session.passport = { user: { id: user.id } };
     return { message: 'Login Successful' };
   }
 
