@@ -1,33 +1,29 @@
-# Building layer
-ARG PORT=3000
+FROM node:18-alpine as builder
 
-FROM node:16-alpine as build
+ENV NODE_ENV build
 
-WORKDIR /app
+USER node
+WORKDIR /home/node
 
-# Copy configuration files
-COPY tsconfig*.json ./
 COPY package*.json ./
+RUN npm ci
 
-# Install dependencies from package-lock.json, see https://docs.npmjs.com/cli/v7/commands/npm-ci
-RUN npm ci --omit=dev
+COPY --chown=node:node . .
+RUN npm run build \
+  && npm prune --production
 
-# Copy application sources (.ts, .tsx, js)
-COPY src/ src/
+# ---
 
-# Build application (produces dist/ folder)
-RUN npm run build
+FROM node:18-alpine
 
-# Runtime (production) layer
-FROM node:16-alpine as production
+ENV NODE_ENV production
 
-WORKDIR /app
+USER node
+WORKDIR /home/node
 
-# Copy production build
-COPY --from=build /app/dist/ ./dist/
+COPY --from=builder --chown=node:node /home/node/package*.json ./
+COPY --from=builder --chown=node:node /home/node/node_modules/ ./node_modules/
+COPY --from=builder --chown=node:node /home/node/dist/ ./dist/
 
-# Expose application port
-EXPOSE ${PORT}
 
-# Start application
-CMD [ "node", "dist/main.js" ]
+CMD ["node", "dist/server.js"]

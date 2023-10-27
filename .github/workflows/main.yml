@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.actor }}/nest-file-explorer:latest
+  IMAGE_NAME: stventek/nest-file-explorer:latest
 
 jobs:
   publish:
@@ -18,11 +18,10 @@ jobs:
       - uses: actions/checkout@v3
       - name: Login
         run: |
-          echo ${{ secrets.PAT }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          echo ${{ secrets.PAT }} | docker login ghcr.io -u stventek --password-stdin
       - name: Build and Publish Backend
         run: |
-          docker build . --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
-          --build-arg "PORT=${{ secrets.PORT }}" \
+          docker build --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}  .
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
   deploy:
@@ -38,9 +37,12 @@ jobs:
           ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
       - name: connect and pull
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.WORK_DIR }} &&\
-          eval "echo \"$(cat docker-compose.yml)\"" > docker-compose.yml &&\
-          docker compose pull && docker compose up -d && exit"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<EOF
+            cd ${{ secrets.WORK_DIR }}
+            eval "echo \"$(cat docker-compose.yml)\"" > docker-compose.yml
+            docker compose pull
+            docker compose up -d
+          EOF
         env:
           PORT: ${{ secrets.PORT }}
           DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
