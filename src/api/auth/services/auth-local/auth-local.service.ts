@@ -22,7 +22,9 @@ export class AuthLocalService {
       throw new UnauthorizedException('Incorrect username or password');
     }
 
-    return foundUser;
+    foundUser.lastLoginAt = new Date();
+
+    return this.userRepository.save(foundUser);
   }
 
   async findByEmail(email: string) {
