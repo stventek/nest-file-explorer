@@ -4,12 +4,11 @@ import {
   Controller,
   Post,
   Req,
-  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { Request, Response } from 'express';
+import { Request } from 'express';
 import { LocalGuard } from './guards/local.guard';
 import { LocalLoginDto } from './dto/local-login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -46,15 +45,15 @@ export class AuthController {
     return { message: 'Login Successful' };
   }
 
+  @UseInterceptors(ClassSerializerInterceptor)
   @Post('login')
   @UseGuards(LocalGuard)
   async login(
     @Req() req: Request,
-    @Res() res: Response,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    @Body() user: LocalLoginDto,
+    @Body() userDto: LocalLoginDto,
   ) {
-    return res.json({ user: req.user });
+    return { user: req.user };
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
