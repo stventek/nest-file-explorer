@@ -1,9 +1,7 @@
 import {
-  BadRequestException,
   Body,
   ClassSerializerInterceptor,
   Controller,
-  Get,
   Post,
   Req,
   Res,
@@ -12,21 +10,22 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Request, Response } from 'express';
-import { GoogleOauthGuard } from './guards/google-oauth.guard';
 import { LocalGuard } from './guards/local.guard';
 import { LocalLoginDto } from './dto/local-login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { IdTokenDto } from './dto/id-token.dto';
 import { GoogleAuthV2Service } from './services/google-auth-v2/google-auth-v2.service';
 
-@Controller('')
+@Controller('api/auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly googleAuthService: GoogleAuthV2Service,
   ) {}
 
-  @UseGuards(GoogleOauthGuard)
+  // old login without frontend SDK, plain passport implementation,
+
+  /*   @UseGuards(GoogleOauthGuard)
   @Get('api/google')
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   async auth() {}
@@ -38,26 +37,30 @@ export class AuthController {
       throw new BadRequestException('Unauthenticated');
     }
     return res.json(req.user);
-  }
+  } */
 
-  @Post('api/auth/google')
+  @Post('google')
   async loginv2(@Req() req: Request, @Body() idTokenDto: IdTokenDto) {
     const user = await this.googleAuthService.signIn(idTokenDto.token);
     req.session.passport = { user: { id: user.id } };
     return { message: 'Login Successful' };
   }
 
-  @Post('api/auth/login')
+  @Post('login')
   @UseGuards(LocalGuard)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async login(@Req() req, @Res() res: Response, @Body() user: LocalLoginDto) {
-    return res.json({ message: 'Login successful' });
+  async login(
+    @Req() req: Request,
+    @Res() res: Response,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    @Body() user: LocalLoginDto,
+  ) {
+    return res.json({ user: req.user });
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
-  @Post('api/auth/register')
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async register(@Req() req, @Body() user: RegisterDto) {
-    return this.authService.register(user);
+  @Post('register')
+  async register(@Body() userDto: RegisterDto) {
+    const user = await this.authService.register(userDto);
+    return { user };
   }
 }

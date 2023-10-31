@@ -43,7 +43,9 @@ export class AppModule implements NestModule {
           cookie: {
             sameSite: 'lax',
             secure:
-              this.config.get<string>('NODE_ENV') === 'PROD' ? true : false,
+              this.config.get<string>('NODE_ENV') === 'production'
+                ? true
+                : false,
             httpOnly: true,
             maxAge: +this.config.get<number>('SESSION_AGE'),
           },
