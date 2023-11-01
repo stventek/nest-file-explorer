@@ -14,7 +14,7 @@ import { RedisClientType } from 'redis';
 import * as session from 'express-session';
 import * as passport from 'passport';
 
-const envFilePath: string = getEnvPath(`${__dirname}/common/envs`);
+const envFilePath: string = getEnvPath(`${__dirname}/../common/envs`);
 
 @Module({
   imports: [

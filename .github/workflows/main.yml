@@ -10,6 +10,38 @@ env:
   IMAGE_NAME: stventek/nest-file-explorer:latest
 
 jobs:
+  db-migration:
+    name: do database migrations
+    runs-on: ubuntu-latest
+    env:
+      ssh_key: ${{ secrets.SSH_PRIVATE_KEY }}
+      DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
+      DATABASE_HOST: localhost
+      DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+      DATABASE_USER: ${{ secrets.DATABASE_USER }}
+      DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup local port forwarding via ssh tunnel
+        run: |
+          mkdir -p ~/.ssh
+          echo "$ssh_key" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh -o StrictHostKeyChecking=no -M -S my-ctrl-socket -fNT -L 5432:127.0.0.1:5432 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
+      - name: migrate
+        run: |
+          npm run migration:run
+
+      - name: remove local port forwarding
+        run: ssh -S my-ctrl-socket -O exit ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
+
   publish:
     name: build and publish image
     runs-on: ubuntu-latest
